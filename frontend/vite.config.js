@@ -6,6 +6,7 @@ import react from '@vitejs/plugin-react'
 // Isse frontend mein 'http://localhost:5000' likhne ki zarurat nahi padti
 
 export default defineConfig({
+  base: './',
   plugins: [react()],
   server: {
     port: 5173,
