@@ -4,7 +4,7 @@
 export default function ResultPanel({ result, compareResult, error, nodeLabels }) {
 
   function getNodeName(id) {
-    return nodeLabels && nodeLabels[id] ? nodeLabels[id] : `N${id}`;
+    return nodeLabels && nodeLabels[id] ? nodeLabels[id] : `Stop #${id}`;
   }
 
   // ─── Error ────────────────────────────────────────────────────
@@ -96,7 +96,7 @@ export default function ResultPanel({ result, compareResult, error, nodeLabels }
         <div className="stats-grid" style={{ marginBottom: '0.75rem' }}>
           <div className="stat-box">
             <div className="stat-value">{nodesVisited}</div>
-            <div className="stat-label">Nodes Visited</div>
+            <div className="stat-label">Locations Evaluated</div>
           </div>
           <div className="stat-box">
             <div className="stat-value">{path.length}</div>
@@ -206,7 +206,7 @@ export default function ResultPanel({ result, compareResult, error, nodeLabels }
               <td>{astar.distance}</td>
             </tr>
             <tr>
-              <td style={{ color: '#94a3b8' }}>Nodes Visited</td>
+              <td style={{ color: '#94a3b8' }}>Locations Evaluated</td>
               <td style={{ color: winner === 'dijkstra' ? '#22c55e' : '#e2e8f0' }}>
                 {dijkstra.nodesVisited}
               </td>
@@ -215,14 +215,14 @@ export default function ResultPanel({ result, compareResult, error, nodeLabels }
               </td>
             </tr>
             <tr>
-              <td style={{ color: '#94a3b8' }}>Time (ms)</td>
-              <td>{dijkstra.executionTimeMs.toFixed(3)}</td>
-              <td>{astar.executionTimeMs.toFixed(3)}</td>
+              <td style={{ color: '#94a3b8' }}>Compute Time</td>
+              <td>{dijkstra.executionTimeMs?.toFixed(2) || '<1'} ms</td>
+              <td>{astar.executionTimeMs?.toFixed(2) || '<1'} ms</td>
             </tr>
             <tr>
-              <td style={{ color: '#94a3b8' }}>Path Length</td>
-              <td>{dijkstra.path.length} nodes</td>
-              <td>{astar.path.length} nodes</td>
+              <td style={{ color: '#94a3b8' }}>Route Stops</td>
+              <td>{dijkstra.path.length} stops</td>
+              <td>{astar.path.length} stops</td>
             </tr>
           </tbody>
         </table>
@@ -237,7 +237,7 @@ export default function ResultPanel({ result, compareResult, error, nodeLabels }
               <div className="path-display">
                 {r.path.map((node, i) => (
                   <span key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                    <span className="path-node">N{node}</span>
+                    <span className="path-node">{getNodeName(node)}</span>
                     {i < r.path.length - 1 && <span className="path-arrow">→</span>}
                   </span>
                 ))}

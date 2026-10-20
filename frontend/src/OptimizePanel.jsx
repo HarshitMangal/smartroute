@@ -1,7 +1,7 @@
 export default function OptimizePanel({ result, error, nodeLabels }) {
 
   function getNodeName(id) {
-    return nodeLabels && nodeLabels[id] ? nodeLabels[id] : `N${id}`;
+    return nodeLabels && nodeLabels[id] ? nodeLabels[id] : `Stop #${id}`;
   }
   if (error) {
     return (

@@ -2,7 +2,7 @@
 // Displays Kruskal's Minimum Spanning Tree (MST) and Disjoint Set Union (DSU) stats
 export default function MstPanel({ result, error, nodeLabels, loading, onComputeMst, graph }) {
   function getNodeName(id) {
-    return nodeLabels && nodeLabels[id] ? nodeLabels[id] : `Node #${id}`;
+    return nodeLabels && nodeLabels[id] ? nodeLabels[id] : `Hub #${id}`;
   }
 
   return (

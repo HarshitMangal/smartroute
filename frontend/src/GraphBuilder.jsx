@@ -1,38 +1,18 @@
 // GraphBuilder.jsx
-// Left sidebar — user yahan graph banata hai:
-//   1. Nodes count set karo
-//   2. Edges add karo (from → to, weight)
-//   3. Source aur destination choose karo
-//   4. Algorithm select karo
-//   5. Run / Compare karo
+// User-friendly Route Planner & Road Network Manager
+// Uses real landmark names instead of abstract node numbers
 
 import { useState } from 'react';
-
-// Default sample graph — agar user directly test karna chahe
-const DEFAULT_NODES = 6;
-const DEFAULT_EDGES = [
-  [0, 1, 4], [0, 2, 2], [1, 2, 1],
-  [1, 3, 5], [2, 3, 8], [2, 4, 10],
-  [3, 4, 2], [3, 5, 6], [4, 5, 3],
-];
 
 export default function GraphBuilder({ graph, nodeLabels, onChange, onRun, onCompare, loading }) {
   const { nodes, edges, source, destination } = graph;
   const [algorithm, setAlgo] = useState('dijkstra');
-  const [newEdge, setNewEdge] = useState({ from: '', to: '', weight: '' });
+  const [newEdge, setNewEdge] = useState({ from: '0', to: '1', weight: '5' });
+  const [newLocationName, setNewLocationName] = useState('');
+  const [showAddLocation, setShowAddLocation] = useState(false);
 
   function getNodeName(id) {
-    return nodeLabels && nodeLabels[id] ? nodeLabels[id] : `Location N${id}`;
-  }
-
-  function setNodes(n) {
-    onChange({
-      ...graph,
-      nodes: n,
-      edges: graph.edges.filter(([u, v]) => u < n && v < n),
-      source: Math.min(graph.source, n - 1),
-      destination: Math.min(graph.destination, n - 1),
-    });
+    return nodeLabels && nodeLabels[id] ? nodeLabels[id] : `Location #${id}`;
   }
 
   function setSource(s) {
@@ -43,21 +23,41 @@ export default function GraphBuilder({ graph, nodeLabels, onChange, onRun, onCom
     onChange({ ...graph, destination: d });
   }
 
-  function addEdge() {
-    const { from, to, weight } = newEdge;
-    const u = parseInt(from), v = parseInt(to), w = parseInt(weight);
+  function addLocation() {
+    const name = newLocationName.trim() || `Location #${nodes}`;
+    const newId = nodes;
+    if (nodeLabels) {
+      nodeLabels[newId] = name;
+    }
+    // Auto-connect to depot (0) with default 5km
+    const newEdges = [...edges, [0, newId, 5]];
+    onChange({
+      ...graph,
+      nodes: nodes + 1,
+      edges: newEdges,
+      destination: newId,
+    });
+    setNewLocationName('');
+    setShowAddLocation(false);
+  }
 
-    if (isNaN(u) || isNaN(v) || isNaN(w)) return alert('Edge values must be numbers');
-    if (u < 0 || u >= nodes || v < 0 || v >= nodes)
-      return alert(`Node must be between 0 and ${nodes - 1}`);
-    if (w < 0) return alert('Weight cannot be negative');
-    if (u === v) return alert('Self-loop not allowed');
+  function addEdge() {
+    const u = parseInt(newEdge.from);
+    const v = parseInt(newEdge.to);
+    const w = parseFloat(newEdge.weight);
+
+    if (isNaN(u) || isNaN(v) || isNaN(w)) return alert('Distance must be a valid number');
+    if (u === v) return alert('Source and destination cannot be the same place');
+    if (w <= 0) return alert('Distance must be greater than 0 km');
+
+    // Check if edge already exists
+    const exists = edges.some(([a, b]) => (a === u && b === v) || (a === v && b === u));
+    if (exists) return alert('A road already connects these two locations');
 
     onChange({
       ...graph,
       edges: [...edges, [u, v, w]],
     });
-    setNewEdge({ from: '', to: '', weight: '' });
   }
 
   function removeEdge(index) {
@@ -68,136 +68,171 @@ export default function GraphBuilder({ graph, nodeLabels, onChange, onRun, onCom
   }
 
   function clearGraph() {
-    onChange({
-      ...graph,
-      edges: [],
-    });
+    if (window.confirm('Reset all roads?')) {
+      onChange({
+        ...graph,
+        edges: [],
+      });
+    }
   }
 
-  // ─── Graph data banao aur callback call karo ────────────────
   function getGraphData() {
     return { nodes, edges, source, destination };
   }
 
   function handleRun() {
-    if (edges.length === 0) return alert('Add at least one edge');
+    if (edges.length === 0) return alert('Add at least one connecting road');
     onRun(getGraphData(), algorithm);
   }
 
   function handleCompare() {
-    if (edges.length === 0) return alert('Add at least one edge');
+    if (edges.length === 0) return alert('Add at least one connecting road');
     onCompare(getGraphData());
   }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
 
-      {/* ── Graph Config ──────────────────────────────────────── */}
+      {/* ── Route Planning Card ───────────────────────────────── */}
       <div className="card">
-        <div className="card-title">Graph Setup</div>
-
-        <div className="form-group">
-          <label>Total Nodes (intersections)</label>
-          <input
-            type="number" min="2" max="50" value={nodes}
-            onChange={e => {
-              const n = parseInt(e.target.value) || 2;
-              setNodes(n);
-              setEdges([]);
-              setSource(0);
-              setDest(Math.min(1, n - 1));
-            }}
-          />
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+          <div className="card-title" style={{ margin: 0 }}>📍 Route Planner</div>
+          <span style={{ fontSize: '0.75rem', background: '#1e293b', border: '1px solid #334155', padding: '0.2rem 0.5rem', borderRadius: '4px', color: '#94a3b8' }}>
+            {nodes} Delivery Hubs
+          </span>
         </div>
 
-        <div className="form-row">
-          <div className="form-group">
-            <label>📍 Source Location (Start)</label>
-            <select value={source} onChange={e => setSource(parseInt(e.target.value))}>
-              {Array.from({ length: nodes }, (_, i) => (
-                <option key={i} value={i}>{getNodeName(i)}</option>
-              ))}
-            </select>
-          </div>
-          <div className="form-group">
-            <label>🏁 Destination Location (End)</label>
-            <select value={destination} onChange={e => setDest(parseInt(e.target.value))}>
-              {Array.from({ length: nodes }, (_, i) => (
-                <option key={i} value={i}>{getNodeName(i)}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-
+        {/* Source & Destination Dropdowns */}
         <div className="form-group">
-          <label>Algorithm</label>
-          <select value={algorithm} onChange={e => setAlgo(e.target.value)}>
-            <option value="dijkstra">Dijkstra — Guaranteed shortest path</option>
-            <option value="astar">A* — Goal-directed search</option>
+          <label>🟢 Start Location (Depot / Origin)</label>
+          <select value={source} onChange={e => setSource(parseInt(e.target.value))}>
+            {Array.from({ length: nodes }, (_, i) => (
+              <option key={i} value={i}>{getNodeName(i)}</option>
+            ))}
           </select>
+        </div>
+
+        <div className="form-group">
+          <label>🏁 Final Destination (Drop-off)</label>
+          <select value={destination} onChange={e => setDest(parseInt(e.target.value))}>
+            {Array.from({ length: nodes }, (_, i) => (
+              <option key={i} value={i}>{getNodeName(i)}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="form-group">
+          <label>Routing Engine Algorithm</label>
+          <select value={algorithm} onChange={e => setAlgo(e.target.value)}>
+            <option value="dijkstra">Dijkstra — Exact Shortest Path Guarantee</option>
+            <option value="astar">A* Search — Heuristic Goal-Directed (Fastest)</option>
+          </select>
+        </div>
+
+        {/* Quick Add Custom Location Toggle */}
+        <div style={{ marginTop: '0.5rem' }}>
+          {!showAddLocation ? (
+            <button
+              className="btn btn-secondary btn-sm"
+              style={{ width: '100%', fontSize: '0.78rem' }}
+              onClick={() => setShowAddLocation(true)}
+            >
+              ➕ Add New Delivery Location
+            </button>
+          ) : (
+            <div style={{ background: '#0f172a', padding: '0.6rem', borderRadius: '6px', border: '1px solid #334155' }}>
+              <div style={{ fontSize: '0.75rem', color: '#38bdf8', marginBottom: '0.35rem', fontWeight: 600 }}>
+                New Landmark / Customer Address:
+              </div>
+              <input
+                type="text"
+                placeholder="e.g. Airport Road, Central Mall"
+                value={newLocationName}
+                onChange={e => setNewLocationName(e.target.value)}
+                style={{ marginBottom: '0.5rem' }}
+              />
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button className="btn btn-primary btn-sm" onClick={addLocation}>Save Location</button>
+                <button className="btn btn-secondary btn-sm" onClick={() => setShowAddLocation(false)}>Cancel</button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* ── Add Edge ──────────────────────────────────────────── */}
+      {/* ── Connect Roads Card ─────────────────────────────────── */}
       <div className="card">
-        <div className="card-title">Add Road (Edge)</div>
+        <div className="card-title">🛣️ Road Network & Distances</div>
 
-        <div className="form-row">
-          <div className="form-group">
-            <label>From</label>
-            <input
-              type="number" placeholder="0" min="0" max={nodes - 1}
-              value={newEdge.from}
-              onChange={e => setNewEdge(p => ({ ...p, from: e.target.value }))}
-            />
-          </div>
-          <div className="form-group">
-            <label>To</label>
-            <input
-              type="number" placeholder="1" min="0" max={nodes - 1}
-              value={newEdge.to}
-              onChange={e => setNewEdge(p => ({ ...p, to: e.target.value }))}
-            />
-          </div>
-          <div className="form-group">
-            <label>Distance</label>
-            <input
-              type="number" placeholder="5" min="0"
-              value={newEdge.weight}
-              onChange={e => setNewEdge(p => ({ ...p, weight: e.target.value }))}
-            />
-          </div>
+        <div className="form-group">
+          <label>Connect From</label>
+          <select
+            value={newEdge.from}
+            onChange={e => setNewEdge(p => ({ ...p, from: e.target.value }))}
+          >
+            {Array.from({ length: nodes }, (_, i) => (
+              <option key={i} value={i}>{getNodeName(i)}</option>
+            ))}
+          </select>
         </div>
 
-        <button className="btn btn-secondary" onClick={addEdge}>+ Add Edge</button>
+        <div className="form-group">
+          <label>Connect To</label>
+          <select
+            value={newEdge.to}
+            onChange={e => setNewEdge(p => ({ ...p, to: e.target.value }))}
+          >
+            {Array.from({ length: nodes }, (_, i) => (
+              <option key={i} value={i}>{getNodeName(i)}</option>
+            ))}
+          </select>
+        </div>
 
-        {/* Edge List */}
+        <div className="form-group">
+          <label>Road Distance (km)</label>
+          <input
+            type="number"
+            placeholder="Distance in km"
+            min="1"
+            max="100"
+            value={newEdge.weight}
+            onChange={e => setNewEdge(p => ({ ...p, weight: e.target.value }))}
+          />
+        </div>
+
+        <button className="btn btn-secondary" onClick={addEdge} style={{ marginTop: '0.25rem' }}>
+          + Connect Road
+        </button>
+
+        {/* Road List with Real Names */}
         {edges.length > 0 && (
-          <div style={{ marginTop: '0.75rem' }}>
-            <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginBottom: '0.4rem' }}>
-              {edges.length} edge{edges.length !== 1 ? 's' : ''} added
+          <div style={{ marginTop: '0.85rem' }}>
+            <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginBottom: '0.4rem', display: 'flex', justifyContent: 'space-between' }}>
+              <span>{edges.length} active roads</span>
+              <button
+                onClick={clearGraph}
+                style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '0.7rem', cursor: 'pointer', padding: 0 }}
+              >
+                Reset All Roads
+              </button>
             </div>
-            <div className="edge-list">
+            <div className="edge-list" style={{ maxHeight: '160px', overflowY: 'auto' }}>
               {edges.map(([u, v, w], i) => (
-                <div key={i} className="edge-item">
-                  <span>{u} → {v} &nbsp;<strong style={{ color: '#e2e8f0' }}>({w})</strong></span>
+                <div key={i} className="edge-item" style={{ fontSize: '0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span title={`${getNodeName(u)} ➔ ${getNodeName(v)}`}>
+                    <strong>{getNodeName(u).split(' ')[0]}</strong> ➔ <strong>{getNodeName(v).split(' ')[0]}</strong>
+                    <span style={{ color: '#38bdf8', marginLeft: '0.4rem' }}>{w} km</span>
+                  </span>
                   <button
                     className="btn btn-danger btn-sm"
                     onClick={() => removeEdge(i)}
+                    style={{ padding: '0.15rem 0.4rem', fontSize: '0.7rem' }}
                   >✕</button>
                 </div>
               ))}
             </div>
           </div>
         )}
-
-        <button
-          className="btn btn-danger"
-          style={{ marginTop: '0.5rem' }}
-          onClick={clearGraph}
-        >
-          Clear All Edges
-        </button>
       </div>
 
       {/* ── Action Buttons ────────────────────────────────────── */}
@@ -206,11 +241,12 @@ export default function GraphBuilder({ graph, nodeLabels, onChange, onRun, onCom
           className="btn btn-primary"
           onClick={handleRun}
           disabled={loading}
+          style={{ padding: '0.75rem', fontSize: '0.92rem' }}
         >
           {loading ? (
-            <><span className="loading-spinner" />Calculating...</>
+            <><span className="loading-spinner" />Optimizing Route...</>
           ) : (
-            `▶ Run ${algorithm === 'dijkstra' ? 'Dijkstra' : 'A*'}`
+            `▶ Find Shortest Route (${algorithm === 'dijkstra' ? 'Dijkstra' : 'A*'})`
           )}
         </button>
 
@@ -218,8 +254,9 @@ export default function GraphBuilder({ graph, nodeLabels, onChange, onRun, onCom
           className="btn btn-secondary"
           onClick={handleCompare}
           disabled={loading}
+          style={{ padding: '0.65rem' }}
         >
-          {loading ? 'Running...' : '⚖ Compare Dijkstra vs A*'}
+          {loading ? 'Comparing...' : '⚖ Benchmark: Dijkstra vs A*'}
         </button>
       </div>
 

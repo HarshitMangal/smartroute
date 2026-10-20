@@ -32,7 +32,7 @@ export default function HistoryModal({ isOpen, onClose, nodeLabels, onSelectHist
   }
 
   function getNodeName(id) {
-    return nodeLabels && nodeLabels[id] ? nodeLabels[id] : `Node #${id}`;
+    return nodeLabels && nodeLabels[id] ? nodeLabels[id] : `Stop #${id}`;
   }
 
   function formatTime(iso) {
@@ -173,7 +173,7 @@ export default function HistoryModal({ isOpen, onClose, nodeLabels, onSelectHist
 
                     {isShort && item.result && (
                       <div style={{ fontSize: '0.8rem', color: '#cbd5e1' }}>
-                        Distance: <strong style={{ color: '#38bdf8' }}>{item.result.distance} km</strong> ({item.result.nodesVisited} nodes visited in {item.result.executionTimeMs?.toFixed(2)} ms)
+                        Distance: <strong style={{ color: '#38bdf8' }}>{item.result.distance} km</strong> ({item.result.nodesVisited} locations evaluated in {item.result.executionTimeMs?.toFixed(2)} ms)
                       </div>
                     )}
 

@@ -84,7 +84,7 @@ export default function GraphMap({
   const [isLocating, setIsLocating] = useState(false);
 
   function getNodeName(id) {
-    return nodeLabels && nodeLabels[id] ? nodeLabels[id] : `N${id}`;
+    return nodeLabels && nodeLabels[id] ? nodeLabels[id] : `Stop #${id}`;
   }
 
   // Auto-detect browser live GPS location on mount

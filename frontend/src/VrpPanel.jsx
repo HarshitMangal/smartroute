@@ -37,7 +37,7 @@ export default function VrpPanel({ result, error, nodeLabels }) {
   const { routes, totalFleetDistance, maxRouteDistance, executionTimeMs } = result;
 
   function getNodeName(id) {
-    return nodeLabels && nodeLabels[id] ? nodeLabels[id] : `N${id}`;
+    return nodeLabels && nodeLabels[id] ? nodeLabels[id] : `Stop #${id}`;
   }
 
   return (

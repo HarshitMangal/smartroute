@@ -10,7 +10,7 @@ import { getDistanceKm } from './geoUtils';
 import AuthModal     from './AuthModal';
 import LocationSearch from './LocationSearch';
 import HistoryModal  from './HistoryModal';
-import { calculateRoute, compareAlgorithms, optimizeRoute, optimizeVrp, calculateMst, getCircuitStatus, getStoredUser, logoutUser } from './api';
+import { calculateRoute, compareAlgorithms, optimizeRoute, optimizeVrp, calculateMst, getCircuitStatus, getStoredUser, logoutUser, loginAsDemo } from './api';
 
 const SAMPLE_GRAPH = {
   nodes: 6,
@@ -279,6 +279,124 @@ export default function App() {
         ? [{ vehicleId: 1, stops: activePath }]
         : null;
 
+  // ── Authentication Gate (Require Login Before Dispatch Console) ──
+  if (!user) {
+    return (
+      <div className="app" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+        <header className="header" style={{ justifyContent: 'center' }}>
+          <h1>🗺 SmartRoute</h1>
+          <span>Intelligent Route Optimization & Fleet Logistics</span>
+        </header>
+
+        <div style={{
+          flex: 1,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '2.5rem 1rem',
+          background: 'radial-gradient(ellipse at top, #1e293b 0%, #0f172a 100%)',
+        }}>
+          <div className="card" style={{ maxWidth: '600px', width: '100%', padding: '2.2rem', textAlign: 'center', border: '1px solid #334155', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5)' }}>
+            <div style={{ fontSize: '2.5rem', marginBottom: '0.6rem' }}>🚚 🗺️ 🏢</div>
+            <h2 style={{ color: '#f8fafc', fontSize: '1.6rem', fontWeight: 800, marginBottom: '0.5rem' }}>
+              SmartRoute Logistics Platform
+            </h2>
+            <p style={{ color: '#94a3b8', fontSize: '0.88rem', lineHeight: '1.6', marginBottom: '1.6rem' }}>
+              Urban route optimization system powered by Dijkstra, A*, Capacitated Multi-Vehicle Routing (CVRP), and Kruskal's Minimum Spanning Tree algorithms.
+            </p>
+
+            <div style={{
+              background: '#0f172a',
+              border: '1px solid #38bdf8',
+              borderRadius: '8px',
+              padding: '0.85rem 1rem',
+              marginBottom: '1.5rem',
+              fontSize: '0.82rem',
+              color: '#bae6fd',
+              textAlign: 'left',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.75rem',
+            }}>
+              <span style={{ fontSize: '1.4rem' }}>🔒</span>
+              <div>
+                <strong style={{ color: '#38bdf8' }}>Authentication Gate:</strong> Sign in or pick a 1-click demo role below to launch the logistics control panel.
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem', marginBottom: '1.6rem' }}>
+              {/* Quick Admin Demo Login */}
+              <button
+                className="btn btn-primary"
+                onClick={async () => {
+                  const u = await loginAsDemo('admin');
+                  setUser(u);
+                }}
+                style={{
+                  padding: '0.95rem 1.25rem',
+                  fontSize: '0.96rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.65rem',
+                  background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
+                  boxShadow: '0 4px 14px rgba(2, 132, 199, 0.4)',
+                  cursor: 'pointer',
+                }}
+              >
+                <span style={{ fontSize: '1.2rem' }}>🏢</span>
+                <strong>1-Click Demo: Logistics Dispatcher / Admin</strong>
+              </button>
+
+              {/* Quick Driver Demo Login */}
+              <button
+                className="btn btn-secondary"
+                onClick={async () => {
+                  const u = await loginAsDemo('driver');
+                  setUser(u);
+                }}
+                style={{
+                  padding: '0.9rem 1.25rem',
+                  fontSize: '0.94rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.65rem',
+                  border: '1px solid #10b981',
+                  color: '#34d399',
+                  background: '#064e3b22',
+                  cursor: 'pointer',
+                }}
+              >
+                <span style={{ fontSize: '1.2rem' }}>🚚</span>
+                <strong>1-Click Demo: Delivery Driver (Van #1 View)</strong>
+              </button>
+            </div>
+
+            <div style={{ borderTop: '1px solid #334155', paddingTop: '1.2rem' }}>
+              <div style={{ fontSize: '0.78rem', color: '#64748b', marginBottom: '0.6rem' }}>
+                Need enterprise login or Two-Factor TOTP Authenticator?
+              </div>
+              <button
+                className="btn btn-secondary btn-sm"
+                onClick={() => setIsAuthOpen(true)}
+                style={{ padding: '0.45rem 1.2rem', width: 'auto' }}
+              >
+                🔑 Sign in with Email / TOTP MFA
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <AuthModal
+          isOpen={isAuthOpen}
+          onClose={() => setIsAuthOpen(false)}
+          onAuthSuccess={loggedUser => setUser(loggedUser)}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="app">
 
@@ -544,7 +662,7 @@ function OptimizeForm({ graph, stops, nodeLabels, setStops, loading, onOptimize 
   const [selectedStop, setSelectedStop] = useState(0);
 
   function getNodeName(id) {
-    return nodeLabels && nodeLabels[id] ? nodeLabels[id] : `Location N${id}`;
+    return nodeLabels && nodeLabels[id] ? nodeLabels[id] : `Location #${id}`;
   }
 
   function addStop() {
@@ -631,7 +749,7 @@ function VrpForm({
   const [selectedStop, setSelectedStop] = useState(0);
 
   function getNodeName(id) {
-    return nodeLabels && nodeLabels[id] ? nodeLabels[id] : `Location N${id}`;
+    return nodeLabels && nodeLabels[id] ? nodeLabels[id] : `Location #${id}`;
   }
 
   function addStop() {
