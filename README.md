@@ -1,5 +1,11 @@
 # 🗺 SmartRoute — Intelligent Multi-Vehicle Route Optimization & Real-Time Telematics Platform
 
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-GitHub%20Pages-brightgreen)](https://harshitmangal.github.io/smartroute/)
+[![GitHub Repo](https://img.shields.io/badge/GitHub-Repository-blue)](https://github.com/HarshitMangal/smartroute)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+> **Live Web Application**: [https://harshitmangal.github.io/smartroute/](https://harshitmangal.github.io/smartroute/)
+
 > **A High-Performance Enterprise Logistics Engine integrating Advanced Graph DSA, Operating Systems Concurrency, In-Memory Caching, and Full-Duplex WebSockets.**
 
 ---
