@@ -40,6 +40,43 @@
 
 ---
 
+## 📸 Screenshots & UI Showcase
+
+### 1. 🏢 Enterprise Dispatcher & Driver Authentication Gateway
+> Secure role-based login gate with 1-click instant demo profiles for Logistics Dispatchers and Delivery Drivers, plus Google Authenticator TOTP Multi-Factor Authentication.
+
+![Authentication Gateway](screenshots/01_auth_gate.png)
+
+---
+
+### 2. 📍 Interactive Route Planning & Real-Time Navigation
+> Point-to-point guaranteed shortest path with interactive OpenStreetMap Leaflet visualization in Jodhpur, featuring Expected Travel Time (ETA), fuel consumption estimation, and Dijkstra / A* route computation.
+
+![Dispatcher Console](screenshots/02_dispatcher_console.png)
+
+---
+
+### 3. 📦 1-Van Multi-Stop Delivery Optimization (TSP)
+> Heuristic tour construction via Nearest Neighbor combined with 2-Opt local search refinement, eliminating path intersections and calculating distance savings percentages.
+
+![Delivery Optimization](screenshots/03_delivery_optimization.png)
+
+---
+
+### 4. 🚛 Multi-Vehicle Fleet Dispatch (CVRP)
+> Capacitated Vehicle Routing Problem clustering multiple delivery vans from a central depot, respecting vehicle package capacity bounds with color-coded van routes.
+
+![Fleet VRP](screenshots/04_fleet_vrp.png)
+
+---
+
+### 5. 🌲 Infrastructure Transit Backbone (Kruskal's MST)
+> Minimum Spanning Tree computation using Kruskal's Algorithm with Disjoint Set Union (Path Compression + Union by Rank) to identify the minimum-cost road network without cycles.
+
+![Transit Backbone MST](screenshots/05_transit_backbone_mst.png)
+
+---
+
 ## ⚡ Core Technical Pillars
 
 ### 1. Data Structures & Algorithms (C++14)
