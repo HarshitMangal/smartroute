@@ -9,7 +9,17 @@
 
 const express      = require('express');
 const router       = express.Router();
-const { runShortestPath, runCompare, runOptimize, runVrp, runMst, engineBreaker } = require('../services/engineService');
+const {
+  runShortestPath,
+  runCompare,
+  runOptimize,
+  runVrp,
+  runMst,
+  runZeroOneBfs,
+  runBfsHops,
+  runPriorityDispatch,
+  engineBreaker,
+} = require('../services/engineService');
 const RouteHistory = require('../models/RouteHistory');
 const { generateRouteKey, getCache, setCache, getCacheStatus } = require('../services/redisService');
 
@@ -220,6 +230,57 @@ router.post('/mst', async (req, res) => {
   } catch (e) {
     console.error('MST error:', e);
     res.status(500).json({ success: false, error: 'Engine error during MST' });
+  }
+});
+
+// ─── POST /api/route/zero-one-bfs ────────────────────────────────
+// 0-1 BFS with std::deque (O(V+E) Linear Shortest Path)
+router.post('/zero-one-bfs', async (req, res) => {
+  const { nodes, edges, source, destination } = req.body;
+  if (!edges || edges.length === 0) {
+    return res.status(400).json({ success: false, error: 'edges must be non-empty' });
+  }
+
+  try {
+    const result = await runZeroOneBfs({ nodes, edges, source, destination });
+    res.json({ success: true, data: result });
+  } catch (e) {
+    console.error('0-1 BFS error:', e);
+    res.status(500).json({ success: false, error: 'Engine error during 0-1 BFS' });
+  }
+});
+
+// ─── POST /api/route/bfs-hops ────────────────────────────────────
+// FIFO Queue BFS for Minimum Intersections / Hops
+router.post('/bfs-hops', async (req, res) => {
+  const { nodes, edges, source, destination } = req.body;
+  if (!edges || edges.length === 0) {
+    return res.status(400).json({ success: false, error: 'edges must be non-empty' });
+  }
+
+  try {
+    const result = await runBfsHops({ nodes, edges, source, destination });
+    res.json({ success: true, data: result });
+  } catch (e) {
+    console.error('BFS Hops error:', e);
+    res.status(500).json({ success: false, error: 'Engine error during BFS Hops' });
+  }
+});
+
+// ─── POST /api/route/priority-dispatch ───────────────────────────
+// Priority Queue / Min-Heap Order Dispatch
+router.post('/priority-dispatch', async (req, res) => {
+  const { depot = 0, orders = [], nodes = 6 } = req.body;
+  if (!Array.isArray(orders) || orders.length === 0) {
+    return res.status(400).json({ success: false, error: 'orders must be a non-empty array' });
+  }
+
+  try {
+    const result = await runPriorityDispatch(depot, orders, nodes);
+    res.json({ success: true, data: result });
+  } catch (e) {
+    console.error('Priority Dispatch error:', e);
+    res.status(500).json({ success: false, error: 'Engine error during Priority Dispatch' });
   }
 });
 

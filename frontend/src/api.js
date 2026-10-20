@@ -6,6 +6,9 @@ import {
   runClientOptimizeRoute,
   runClientOptimizeVrp,
   runClientCalculateMst,
+  runClientZeroOneBfs,
+  runClientBfsHops,
+  runClientPriorityDispatch,
 } from './clientEngine';
 
 const BASE_URL = 'http://localhost:5000';
@@ -110,6 +113,48 @@ export async function calculateMst(graphData) {
   }
   const clientRes = runClientCalculateMst(graphData);
   saveToLocalHistory('mst_network', clientRes.data);
+  return clientRes;
+}
+
+// ── 6. 0-1 BFS with std::deque (O(V+E) Linear Shortest Path) ───────
+export async function calculateZeroOneBfs(graphData) {
+  try {
+    const res = await api.post('/api/route/zero-one-bfs', graphData);
+    if (res.data?.success) {
+      saveToLocalHistory('zero_one_bfs', res.data.data);
+      return res.data;
+    }
+  } catch (_) {}
+  const clientRes = runClientZeroOneBfs(graphData);
+  saveToLocalHistory('zero_one_bfs', clientRes.data);
+  return clientRes;
+}
+
+// ── 7. FIFO Queue BFS (Minimum Hops / Intersections) ─────────────
+export async function calculateBfsHops(graphData) {
+  try {
+    const res = await api.post('/api/route/bfs-hops', graphData);
+    if (res.data?.success) {
+      saveToLocalHistory('bfs_hops', res.data.data);
+      return res.data;
+    }
+  } catch (_) {}
+  const clientRes = runClientBfsHops(graphData);
+  saveToLocalHistory('bfs_hops', clientRes.data);
+  return clientRes;
+}
+
+// ── 8. Priority Queue / Min-Heap Order Dispatch ──────────────────
+export async function calculatePriorityDispatch(depot, orders, nodes) {
+  try {
+    const res = await api.post('/api/route/priority-dispatch', { depot, orders, nodes });
+    if (res.data?.success) {
+      saveToLocalHistory('priority_dispatch', res.data.data);
+      return res.data;
+    }
+  } catch (_) {}
+  const clientRes = runClientPriorityDispatch(depot, orders, nodes);
+  saveToLocalHistory('priority_dispatch', clientRes.data);
   return clientRes;
 }
 

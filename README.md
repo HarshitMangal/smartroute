@@ -87,18 +87,25 @@
 * **Capacitated Multi-Vehicle Routing Problem (CVRP)**: Greedy Depot clustering under vehicle package bounds followed by isolated 2-Opt refinement per vehicle cluster.
 * **Kruskal's Minimum Spanning Tree (MST)**: Greedy backbone network construction with Disjoint Set Union (DSU) utilizing **Path Compression** ($O(\alpha(V))$ inverse Ackermann time) and **Union by Rank** to prevent redundant road cycles.
 
-### 2. Operating Systems Concurrency
+### 2. Advanced Queue Data Structures in Modern Logistics
+* **0-1 BFS with Double-Ended Queue (`std::deque`)**: For road networks divided into Expressways/Flyovers (cost = 0) and City Streets (cost = 1), 0-1 BFS executes in **strictly linear time $O(V + E)$** by pushing 0-cost roads to the front (`push_front`) and 1-cost roads to the back (`push_back`), completely bypassing Dijkstra's $O((V + E) \log V)$ heap overhead!
+* **Priority Queue / Min-Heap Order Dispatch (`std::priority_queue`)**: Implements instant delivery prioritization (Blinkit/Zepto/Medical logistics style). Orders are extracted via custom comparator, dispatching **Emergency Medicines (🔴 Priority 1)** and **10-minute instant orders (⚡ Priority 2)** before standard parcels (📦 Priority 3), regardless of proximity.
+* **Circular Queue / Ring Buffer (Fixed RAM Telematics Stream)**: A constant $O(1)$ capacity FIFO buffer that records the vehicle's trailing GPS breadcrumb coordinates at 10 Hz without dynamic heap re-allocation or memory leaks.
+* **FIFO Queue Breadth-First Search (`std::queue`)**: Solves for the delivery path with the **minimum number of traffic signals / intersections (hops)**, minimizing vehicle stop-and-go battery/fuel wear.
+* **Work-Stealing Task Deques (Concurrency)**: Load-balancing model where idle delivery vans steal pending deliveries from the rear of overloaded vans' deques.
+
+### 3. Operating Systems Concurrency
 * **Task-Parallelism**: Each delivery van's 2-Opt route is solved concurrently on a dedicated OS worker thread (`_beginthreadex`).
 * **Critical Section & Mutex Protection**: Global fleet metrics (`totalFleetDistance`, `maxRouteDistance`) are protected by an RAII `LockGuard` wrapping OS `CRITICAL_SECTION`, guaranteeing zero race conditions and zero deadlocks.
 * **Barrier Synchronization**: The main thread synchronizes with worker threads using `WaitForMultipleObjects` before formatting the JSON output.
 * **Inter-Process Communication (IPC)**: Decoupled native C++ engine communicating with Node.js via OS anonymous standard I/O pipes.
 
-### 3. Distributed Systems, Reliability & Caching
+### 4. Distributed Systems, Reliability & Caching
 * **Circuit Breaker Pattern (Netflix Hystrix Style)**: Protects Node.js from downstream engine stalls. Implements a 3-state machine (`CLOSED`, `OPEN`, `HALF-OPEN`) with execution timeouts and automatic fallback heuristics if the binary crashes.
 * **Redis Caching Layer**: Route lookups hashed as `smartroute:algo:src:dest:edges` with a 1-hour TTL, reducing repeated route lookup latency from **65ms down to 1-4ms (94% drop)**.
 * **Auto-Fallback**: Automatic in-memory LRU cache fallback when Redis server is offline.
 
-### 4. Computer Networks & Real-Time Telematics
+### 5. Computer Networks & Real-Time Telematics
 * **WebSockets (Socket.io RFC 6455)**: Full-duplex persistent bi-directional channel streaming vehicle GPS coordinates at 10 Hz without wasteful HTTP polling.
 * **Geofencing & Delivery Milestones**: Automatic detection when a moving delivery vehicle arrives at a customer node, triggering milestone events.
 

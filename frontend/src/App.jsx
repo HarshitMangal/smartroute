@@ -4,6 +4,7 @@ import ResultPanel   from './ResultPanel';
 import OptimizePanel from './OptimizePanel';
 import VrpPanel      from './VrpPanel';
 import MstPanel      from './MstPanel';
+import QueueHub      from './QueueHub';
 import GraphMap      from './GraphMap';
 import SimulationBar from './SimulationBar';
 import { getDistanceKm } from './geoUtils';
@@ -538,6 +539,12 @@ export default function App() {
             >
               🌳 Backbone (MST)
             </button>
+            <button
+              className={`tab ${tab === 'queue' ? 'active' : ''}`}
+              onClick={() => setTab('queue')}
+            >
+              ⚡ Queue DSA Hub
+            </button>
           </div>
 
           {/* Shortest Path Tab */}
@@ -611,6 +618,21 @@ export default function App() {
               loading={loading}
               onComputeMst={handleComputeMst}
               graph={graph}
+            />
+          )}
+
+          {/* ⚡ Queue Data Structures Hub Tab */}
+          {tab === 'queue' && (
+            <QueueHub
+              graph={graph}
+              nodeLabels={nodeLabels}
+              onHighlightPath={p => setResult({
+                algorithm: 'Queue Optimized Path',
+                path: p,
+                distance: p.length * 3,
+                nodesVisited: p.length,
+                executionTimeMs: 0.1,
+              })}
             />
           )}
 

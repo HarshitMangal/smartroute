@@ -350,3 +350,178 @@ export function runClientCalculateMst(graphData) {
     },
   };
 }
+
+// ── 5. 0-1 BFS with Deque (O(V+E) Linear Shortest Path) ───────────
+export function runClientZeroOneBfs(graphData) {
+  const startTime = performance.now();
+  const { nodes, edges, source, destination } = graphData;
+
+  const adj = Array.from({ length: nodes }, () => []);
+  edges.forEach(([u, v, w]) => {
+    if (u < nodes && v < nodes) {
+      // Binary edge weight: 0 for Highway/Flyover, 1 for City Road
+      const binaryWeight = w > 4 ? 1 : 0;
+      adj[u].push({ to: v, weight: binaryWeight, origWeight: w });
+      adj[v].push({ to: u, weight: binaryWeight, origWeight: w });
+    }
+  });
+
+  const dist = Array(nodes).fill(Infinity);
+  const parent = Array(nodes).fill(-1);
+  const deque = [];
+  let visitedCount = 0;
+  let pushFrontCount = 0;
+  let pushBackCount = 0;
+
+  dist[source] = 0;
+  deque.push(source);
+  pushFrontCount++;
+
+  while (deque.length > 0) {
+    const u = deque.shift(); // pop_front
+    visitedCount++;
+
+    if (u === destination) break;
+
+    for (const edge of adj[u]) {
+      const v = edge.to;
+      const weight = edge.weight;
+
+      if (dist[u] + weight < dist[v]) {
+        dist[v] = dist[u] + weight;
+        parent[v] = u;
+        if (weight === 0) {
+          deque.unshift(v); // push_front (Highway priority)
+          pushFrontCount++;
+        } else {
+          deque.push(v); // push_back (City road)
+          pushBackCount++;
+        }
+      }
+    }
+  }
+
+  const path = [];
+  let curr = destination;
+  if (dist[destination] !== Infinity) {
+    while (curr !== -1) {
+      path.unshift(curr);
+      curr = parent[curr];
+    }
+  }
+
+  const executionTimeMs = parseFloat((performance.now() - startTime).toFixed(2));
+
+  return {
+    success: true,
+    data: {
+      algorithm: '0-1 BFS (std::deque)',
+      dataStructure: 'Double-Ended Queue (std::deque)',
+      timeComplexity: 'O(V + E) Strictly Linear',
+      advantage: "Bypasses Dijkstra's O((V+E) log V) heap overhead for Highway(0) vs City(1) roads",
+      distance: dist[destination] === Infinity ? -1 : dist[destination],
+      nodesVisited: visitedCount,
+      pushFrontCount,
+      pushBackCount,
+      path,
+      executionTimeMs,
+      source: 'Client In-Browser Engine',
+    },
+  };
+}
+
+// ── 6. FIFO Queue BFS (Minimum Hops / Intersections) ──────────────
+export function runClientBfsHops(graphData) {
+  const startTime = performance.now();
+  const { nodes, edges, source, destination } = graphData;
+
+  const adj = Array.from({ length: nodes }, () => []);
+  edges.forEach(([u, v]) => {
+    if (u < nodes && v < nodes) {
+      adj[u].push(v);
+      adj[v].push(u);
+    }
+  });
+
+  const dist = Array(nodes).fill(Infinity);
+  const parent = Array(nodes).fill(-1);
+  const queue = [];
+  let visitedCount = 0;
+
+  dist[source] = 0;
+  queue.push(source);
+
+  while (queue.length > 0) {
+    const u = queue.shift();
+    visitedCount++;
+
+    if (u === destination) break;
+
+    for (const v of adj[u]) {
+      if (dist[v] === Infinity) {
+        dist[v] = dist[u] + 1;
+        parent[v] = u;
+        queue.push(v);
+      }
+    }
+  }
+
+  const path = [];
+  let curr = destination;
+  if (dist[destination] !== Infinity) {
+    while (curr !== -1) {
+      path.unshift(curr);
+      curr = parent[curr];
+    }
+  }
+
+  const executionTimeMs = parseFloat((performance.now() - startTime).toFixed(2));
+
+  return {
+    success: true,
+    data: {
+      algorithm: 'BFS Minimum Hops (std::queue)',
+      dataStructure: 'FIFO Queue (std::queue)',
+      timeComplexity: 'O(V + E)',
+      hops: dist[destination] === Infinity ? -1 : dist[destination],
+      nodesVisited: visitedCount,
+      path,
+      executionTimeMs,
+      source: 'Client In-Browser Engine',
+    },
+  };
+}
+
+// ── 7. Priority Queue / Min-Heap Order Dispatch ───────────────────
+export function runClientPriorityDispatch(depot = 0, orders = [], nodes = 6) {
+  const startTime = performance.now();
+
+  // Sort orders using Min-Heap priority comparator:
+  // Primary: priority (1=Emergency, 2=Express, 3=Standard)
+  // Secondary: distance
+  const sortedOrders = [...orders].sort((a, b) => {
+    if (a.priority !== b.priority) return a.priority - b.priority;
+    return (a.distance || 0) - (b.distance || 0);
+  });
+
+  let totalDistance = 0;
+  sortedOrders.forEach(ord => {
+    totalDistance += (ord.distance || 5);
+  });
+
+  const executionTimeMs = parseFloat((performance.now() - startTime).toFixed(2));
+
+  return {
+    success: true,
+    data: {
+      algorithm: 'Priority Order Dispatch (std::priority_queue)',
+      dataStructure: 'Min-Heap Priority Queue',
+      timeComplexity: 'O(N log N)',
+      dispatchedOrders: sortedOrders,
+      totalDistance,
+      executionTimeMs,
+      source: 'Client In-Browser Engine',
+    },
+  };
+}
+

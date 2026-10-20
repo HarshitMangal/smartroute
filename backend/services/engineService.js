@@ -118,4 +118,48 @@ function runMst(graphData) {
   return runEngine(input);
 }
 
-module.exports = { runShortestPath, runCompare, runOptimize, runVrp, runMst, engineBreaker };
+// ─── Mode 6: 0-1 BFS with std::deque (O(V+E) Linear Shortest Path) ──
+function runZeroOneBfs(graphData) {
+  const { nodes, edges, source, destination } = graphData;
+
+  // Format: zero_one_bfs\nnodes edges source dest\nu v w\n...
+  let input = `zero_one_bfs\n${nodes} ${edges.length} ${source} ${destination}\n`;
+  for (const [u, v, w] of edges) input += `${u} ${v} ${w}\n`;
+
+  return runEngine(input);
+}
+
+// ─── Mode 7: FIFO Queue BFS (Minimum Intersections / Hops) ────────
+function runBfsHops(graphData) {
+  const { nodes, edges, source, destination } = graphData;
+
+  // Format: bfs_hops\nnodes edges source dest\nu v w\n...
+  let input = `bfs_hops\n${nodes} ${edges.length} ${source} ${destination}\n`;
+  for (const [u, v, w] of edges) input += `${u} ${v} ${w}\n`;
+
+  return runEngine(input);
+}
+
+// ─── Mode 8: Priority Queue / Min-Heap Order Dispatch ─────────────
+function runPriorityDispatch(depot, orders, nodes = 6) {
+  // orders: [ { stopId, priority, distance, tier } ]
+  let input = `priority_dispatch\n${nodes} ${orders.length} ${depot}\n`;
+  for (const ord of orders) {
+    const cleanTier = (ord.tier || 'Standard_Parcel').replace(/\s+/g, '_');
+    input += `${ord.stopId} ${ord.priority} ${ord.distance || 5} ${cleanTier}\n`;
+  }
+
+  return runEngine(input);
+}
+
+module.exports = {
+  runShortestPath,
+  runCompare,
+  runOptimize,
+  runVrp,
+  runMst,
+  runZeroOneBfs,
+  runBfsHops,
+  runPriorityDispatch,
+  engineBreaker,
+};

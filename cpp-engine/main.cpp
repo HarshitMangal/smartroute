@@ -42,6 +42,7 @@
 #include <iostream>
 #include <vector>
 #include <queue>
+#include <deque>
 #include <climits>
 #include <algorithm>
 #include <chrono>
@@ -530,6 +531,239 @@ void printMstJSON(const MstResult& res) {
     cout << "}\n";
 }
 
+// ============================================================================
+// ⚡ QUEUE DATA STRUCTURES & ALGORITHMS
+// ============================================================================
+
+// ── 1. 0-1 BFS with std::deque (O(V+E) Linear Shortest Path) ────────────────
+struct ZeroOneBfsResult {
+    int distance;
+    vector<int> path;
+    int nodesVisited;
+    int pushFrontCount;
+    int pushBackCount;
+    double executionTimeMs;
+};
+
+ZeroOneBfsResult zeroOneBFS(int source, int destination, const vector<vector<pair<int,int> > >& graph) {
+    auto startTime = chrono::high_resolution_clock::now();
+    int n = graph.size();
+    vector<int> dist(n, INF);
+    vector<int> parent(n, -1);
+    deque<int> dq;
+    int nodesVisited = 0;
+    int pushFront = 0;
+    int pushBack = 0;
+
+    dist[source] = 0;
+    dq.push_front(source);
+    pushFront++;
+
+    while (!dq.empty()) {
+        int u = dq.front();
+        dq.pop_front();
+        nodesVisited++;
+
+        if (u == destination) break;
+
+        for (size_t i = 0; i < graph[u].size(); i++) {
+            int v = graph[u][i].first;
+            int weight = graph[u][i].second; // 0 for expressway, 1 for regular road
+
+            if (dist[u] + weight < dist[v]) {
+                dist[v] = dist[u] + weight;
+                parent[v] = u;
+                if (weight == 0) {
+                    dq.push_front(v);
+                    pushFront++;
+                } else {
+                    dq.push_back(v);
+                    pushBack++;
+                }
+            }
+        }
+    }
+
+    ZeroOneBfsResult res;
+    res.distance = (dist[destination] >= INF) ? -1 : dist[destination];
+    res.nodesVisited = nodesVisited;
+    res.pushFrontCount = pushFront;
+    res.pushBackCount = pushBack;
+
+    vector<int> path;
+    if (res.distance != -1) {
+        int curr = destination;
+        while (curr != -1) {
+            path.push_back(curr);
+            curr = parent[curr];
+        }
+        reverse(path.begin(), path.end());
+    }
+    res.path = path;
+
+    auto endTime = chrono::high_resolution_clock::now();
+    res.executionTimeMs = chrono::duration<double, milli>(endTime - startTime).count();
+    return res;
+}
+
+// ── 2. Standard FIFO Queue BFS (Minimum Hops / Intersections) ───────────────
+struct BfsHopsResult {
+    int hops;
+    vector<int> path;
+    int nodesVisited;
+    double executionTimeMs;
+};
+
+BfsHopsResult bfsMinHops(int source, int destination, const vector<vector<pair<int,int> > >& graph) {
+    auto startTime = chrono::high_resolution_clock::now();
+    int n = graph.size();
+    vector<int> dist(n, INF);
+    vector<int> parent(n, -1);
+    queue<int> q;
+    int nodesVisited = 0;
+
+    dist[source] = 0;
+    q.push(source);
+
+    while (!q.empty()) {
+        int u = q.front();
+        q.pop();
+        nodesVisited++;
+
+        if (u == destination) break;
+
+        for (size_t i = 0; i < graph[u].size(); i++) {
+            int v = graph[u][i].first;
+            if (dist[v] == INF) {
+                dist[v] = dist[u] + 1;
+                parent[v] = u;
+                q.push(v);
+            }
+        }
+    }
+
+    BfsHopsResult res;
+    res.hops = (dist[destination] >= INF) ? -1 : dist[destination];
+    res.nodesVisited = nodesVisited;
+
+    vector<int> path;
+    if (res.hops != -1) {
+        int curr = destination;
+        while (curr != -1) {
+            path.push_back(curr);
+            curr = parent[curr];
+        }
+        reverse(path.begin(), path.end());
+    }
+    res.path = path;
+
+    auto endTime = chrono::high_resolution_clock::now();
+    res.executionTimeMs = chrono::duration<double, milli>(endTime - startTime).count();
+    return res;
+}
+
+// ── 3. Priority Queue / Min-Heap Order Dispatcher ───────────────────────────
+struct DeliveryOrder {
+    int stopId;
+    int priority; // 1 = Emergency, 2 = Express 10-Min, 3 = Standard
+    int distance;
+    string tier;
+
+    bool operator>(const DeliveryOrder& other) const {
+        if (priority != other.priority) return priority > other.priority;
+        return distance > other.distance;
+    }
+};
+
+struct PriorityDispatchResult {
+    vector<DeliveryOrder> dispatchedSequence;
+    int totalDistance;
+    double executionTimeMs;
+};
+
+PriorityDispatchResult priorityOrderDispatch(int depot, const vector<DeliveryOrder>& orders) {
+    auto startTime = chrono::high_resolution_clock::now();
+
+    priority_queue<DeliveryOrder, vector<DeliveryOrder>, greater<DeliveryOrder> > pq;
+    for (size_t i = 0; i < orders.size(); i++) {
+        pq.push(orders[i]);
+    }
+
+    vector<DeliveryOrder> sequence;
+    int totalDist = 0;
+
+    while (!pq.empty()) {
+        DeliveryOrder ord = pq.top();
+        pq.pop();
+        totalDist += ord.distance;
+        sequence.push_back(ord);
+    }
+
+    PriorityDispatchResult res;
+    res.dispatchedSequence = sequence;
+    res.totalDistance = totalDist;
+
+    auto endTime = chrono::high_resolution_clock::now();
+    res.executionTimeMs = chrono::duration<double, milli>(endTime - startTime).count();
+    return res;
+}
+
+// ── JSON Output Formatter for Queue Algorithms ──────────────────────────────
+void printZeroOneBfsJSON(const ZeroOneBfsResult& res) {
+    cout << "{\n";
+    cout << "  \"algorithm\": \"0-1 BFS (std::deque)\",\n";
+    cout << "  \"dataStructure\": \"Double-Ended Queue (std::deque)\",\n";
+    cout << "  \"timeComplexity\": \"O(V + E) Strictly Linear\",\n";
+    cout << "  \"advantage\": \"Bypasses Dijkstra's O((V+E) log V) heap overhead for Highway(0) vs City(1) roads\",\n";
+    cout << "  \"distance\": " << res.distance << ",\n";
+    cout << "  \"nodesVisited\": " << res.nodesVisited << ",\n";
+    cout << "  \"pushFrontCount\": " << res.pushFrontCount << ",\n";
+    cout << "  \"pushBackCount\": " << res.pushBackCount << ",\n";
+    cout << "  \"executionTimeMs\": " << res.executionTimeMs << ",\n";
+    cout << "  \"path\": [";
+    for (size_t i = 0; i < res.path.size(); i++) {
+        cout << res.path[i];
+        if (i + 1 < res.path.size()) cout << ", ";
+    }
+    cout << "]\n}\n";
+}
+
+void printBfsHopsJSON(const BfsHopsResult& res) {
+    cout << "{\n";
+    cout << "  \"algorithm\": \"BFS Minimum Hops (std::queue)\",\n";
+    cout << "  \"dataStructure\": \"FIFO Queue (std::queue)\",\n";
+    cout << "  \"timeComplexity\": \"O(V + E)\",\n";
+    cout << "  \"hops\": " << res.hops << ",\n";
+    cout << "  \"nodesVisited\": " << res.nodesVisited << ",\n";
+    cout << "  \"executionTimeMs\": " << res.executionTimeMs << ",\n";
+    cout << "  \"path\": [";
+    for (size_t i = 0; i < res.path.size(); i++) {
+        cout << res.path[i];
+        if (i + 1 < res.path.size()) cout << ", ";
+    }
+    cout << "]\n}\n";
+}
+
+void printPriorityDispatchJSON(const PriorityDispatchResult& res) {
+    cout << "{\n";
+    cout << "  \"algorithm\": \"Priority Order Dispatch (std::priority_queue)\",\n";
+    cout << "  \"dataStructure\": \"Min-Heap Priority Queue\",\n";
+    cout << "  \"timeComplexity\": \"O(N log N)\",\n";
+    cout << "  \"totalDistance\": " << res.totalDistance << ",\n";
+    cout << "  \"executionTimeMs\": " << res.executionTimeMs << ",\n";
+    cout << "  \"dispatchedOrders\": [\n";
+    for (size_t i = 0; i < res.dispatchedSequence.size(); i++) {
+        const DeliveryOrder& ord = res.dispatchedSequence[i];
+        cout << "    { \"stopId\": " << ord.stopId
+             << ", \"priority\": " << ord.priority
+             << ", \"tier\": \"" << ord.tier << "\""
+             << ", \"distance\": " << ord.distance << " }";
+        if (i + 1 < res.dispatchedSequence.size()) cout << ",";
+        cout << "\n";
+    }
+    cout << "  ]\n}\n";
+}
+
 void printShortestJSON(const ShortestResult& res, const string& algo) {
     cout << "{\n";
     cout << "  \"mode\": \"shortest\",\n";
@@ -893,6 +1127,42 @@ int main() {
         }
         MstResult res = kruskalMST(n, edges);
         printMstJSON(res);
+    } else if (mode == "zero_one_bfs") {
+        // ── 0-1 BFS with std::deque (O(V+E) Linear Shortest Path) ──
+        int n, e, s, d;
+        cin >> n >> e >> s >> d;
+        vector<vector<pair<int,int> > > graph(n);
+        for (int i = 0; i < e; i++) {
+            int u, v, w;
+            cin >> u >> v >> w;
+            graph[u].push_back(make_pair(v, w));
+            graph[v].push_back(make_pair(u, w));
+        }
+        ZeroOneBfsResult res = zeroOneBFS(s, d, graph);
+        printZeroOneBfsJSON(res);
+    } else if (mode == "bfs_hops") {
+        // ── FIFO Queue BFS (Minimum Hops / Intersections) ──────────
+        int n, e, s, d;
+        cin >> n >> e >> s >> d;
+        vector<vector<pair<int,int> > > graph(n);
+        for (int i = 0; i < e; i++) {
+            int u, v, w;
+            cin >> u >> v >> w;
+            graph[u].push_back(make_pair(v, w));
+            graph[v].push_back(make_pair(u, w));
+        }
+        BfsHopsResult res = bfsMinHops(s, d, graph);
+        printBfsHopsJSON(res);
+    } else if (mode == "priority_dispatch") {
+        // ── Priority Queue / Min-Heap Order Dispatcher ────────────
+        int n, numOrders, depot;
+        cin >> n >> numOrders >> depot;
+        vector<DeliveryOrder> orders(numOrders);
+        for (int i = 0; i < numOrders; i++) {
+            cin >> orders[i].stopId >> orders[i].priority >> orders[i].distance >> orders[i].tier;
+        }
+        PriorityDispatchResult res = priorityOrderDispatch(depot, orders);
+        printPriorityDispatchJSON(res);
     }
 
     return 0;
